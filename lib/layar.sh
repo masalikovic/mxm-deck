@@ -116,6 +116,7 @@ _mxm_baris_kursor() {
   stty_lama=$(stty -g </dev/tty 2>/dev/null) || return 0
   stty -echo -icanon </dev/tty 2>/dev/null
   printf '\e[6n' >/dev/tty
+  # shellcheck disable=SC2034  # "R" adalah pembatas -d, bukan variabel
   IFS= read -r -s -t 1 -d R jawab </dev/tty
   stty "$stty_lama" </dev/tty 2>/dev/null
   baris=${jawab#*\[}; baris=${baris%;*}

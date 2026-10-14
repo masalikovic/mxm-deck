@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# dpkg palsu: hanya "dpkg -s <paket>".
+set -u
+[[ "${1:-}" == -s ]] && grep -qx "pkg:$2" "${MXM_UJI_STATUS:?}" 2>/dev/null

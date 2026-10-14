@@ -182,6 +182,7 @@ mxm-deck/
 │   ├── layar.sh       ← header tetap di atas layar
 │   └── pasang.sh      ← logika pasang bersama (pkg/pip resmi saja)
 ├── seni/              ← huruf ASCII tiap gaya + daftar gaya.txt
+├── tests/             ← uji otomatis (jalankan.sh) + pkg/pip palsu
 └── docs/
     ├── ATURAN.md      ← versi panjang dari bagian Aturan
     └── jurnal/        ← catatan tiap langkah (gaya mxm-gameboy)
@@ -218,9 +219,28 @@ NO_COLOR=1 bash deck.sh     # tanpa warna
 MXM_HEADER=0 bash deck.sh   # header ikut menggulir
 ```
 
-Di tiap kategori, pilih `a` (semua), nomor tertentu (mis. `1 3`), atau `q`
-(batal). Alat dipasang satu per satu; hasilnya dicatat di
-`~/.mxm-deck/pasang.log`.
+Di tiap kategori, pilih `a` (semua), nomor tertentu (mis. `1 3`), `h`
+(hapus), atau `q` (batal). Alat dipasang satu per satu; hasilnya dicatat di
+`~/.mxm-deck/pasang.log`. Di daftar, `✓` berarti sudah terpasang dan `~`
+berarti baru sebagian (mis. `tar` ada, `zip` belum).
+
+**Menghapus:** pilih `h`, lalu nomor alatnya. MXM Deck meminta konfirmasi,
+lalu `pkg uninstall`/`pip uninstall` menampilkan apa saja yang ikut terhapus
+dan bertanya sekali lagi. Paket inti Termux (`termux-tools`, `tar`) tidak
+pernah dihapus lewat menu.
+
+---
+
+## 🧪 Uji
+
+```bash
+bash tests/jalankan.sh
+```
+
+Menjalankan shellcheck, uji menu/pasang/hapus (`tests/uji_dasar.sh`, memakai
+`pkg`/`pip` palsu di `tests/palsu/`, jadi tidak memasang apa pun), dan uji
+header tetap di terminal virtual (`tests/uji_layar.py`, butuh
+`pip install pyte`). GitHub Actions menjalankan semuanya di tiap PR.
 
 ---
 

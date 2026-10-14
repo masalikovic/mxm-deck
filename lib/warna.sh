@@ -8,6 +8,8 @@
 #
 # Warna dimatikan otomatis kalau keluaran bukan terminal atau NO_COLOR diset.
 
+# Variabel warna dipakai oleh skrip yang men-source berkas ini.
+# shellcheck disable=SC2034
 if [[ -t 1 && -z "${NO_COLOR:-}" ]]; then
   MXM_ORANYE=$'\e[38;5;215m'
   MXM_CREAM=$'\e[38;5;223m'
