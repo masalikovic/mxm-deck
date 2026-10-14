@@ -3,6 +3,8 @@
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$DIR/lib/warna.sh"
+. "$DIR/lib/banner.sh"
+. "$DIR/lib/layar.sh"
 . "$DIR/lib/pasang.sh"
 
 TOOLS=(

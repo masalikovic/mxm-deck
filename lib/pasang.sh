@@ -88,6 +88,10 @@ mxm_pasang_satu() {
     pip) _mxm_jalankan pip install "${perlu[@]}" ;;
     *) mxm_galat "Pengelola tidak dikenal: $pengelola"; return 1 ;;
   esac
+  local hasil=$?
+  # apt suka mengatur ulang scroll region; pasang lagi header tetap.
+  declare -F mxm_layar_pulihkan >/dev/null && mxm_layar_pulihkan
+  return $hasil
 }
 
 # Alur satu kategori: tampilkan daftar, tanya, pasang satu per satu.

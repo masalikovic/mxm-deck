@@ -1,0 +1,8 @@
+# nama|lebar kolom|keterangan  (urutan = urutan di menu)
+standar|44|Huruf klasik figlet (standard)
+bayangan|44|Blok tebal berbayang (ansi_shadow)
+miring|45|Huruf miring (smslant)
+titik|47|Titik & blok ala elite
+kotak|45|Huruf kotak (rectangles)
+tipis|22|Garis tipis, paling ringkas (future)
+gameboy|40|Gameboy MXM + info perangkat (ala neofetch)
