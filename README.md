@@ -127,9 +127,39 @@ Banner dan menu memakai palet MXM yang sama dengan mxm-gameboy:
 | Teks sekunder | abu-abu tenang | `#8a857c` |
 
 Di terminal, warna ini dipetakan ke kode ANSI (oranye ≈ `\e[38;5;215m`,
-cream ≈ `\e[38;5;223m`). Skrip `deck.sh` akan menampilkan banner di atas
-dengan warna tersebut, lalu menu kategori bergaya kotak seperti contoh
-katoolin, tetapi dengan isi dan aturan MXM.
+cream ≈ `\e[38;5;223m`). Bagian **MXM** banner berwarna oranye, bagian
+**DECK** cream.
+
+### Gaya banner
+
+Pilih lewat menu `g`, atau lihat semuanya dengan `bash deck.sh pratinjau`.
+
+| Gaya | Lebar | Keterangan |
+|---|---|---|
+| `standar` | 44 | Huruf klasik figlet |
+| `bayangan` | 44 | Blok tebal berbayang (MXM) + DECK garis tipis |
+| `miring` | 45 | Huruf miring |
+| `titik` | 47 | Titik & blok ala elite |
+| `kotak` | 45 | Huruf kotak |
+| `tipis` | 22 | Paling ringkas, cadangan untuk layar sempit |
+| `gameboy` | 40 | Gameboy MXM + info perangkat (ala neofetch) |
+| `acak` | – | Gaya berbeda tiap kali dibuka |
+
+Pilihan disimpan di `~/.mxm-deck/gaya`. Untuk sekali jalan:
+`MXM_GAYA=bayangan bash deck.sh`.
+
+**Tambah gaya sendiri:** buat `seni/<nama>-mxm.txt` dan `seni/<nama>-deck.txt`
+(mis. dengan `figlet -f <font> MXM`; baris di berkas `-mxm` diberi spasi
+sampai sama panjang), lalu daftarkan `<nama>|<lebar>|<keterangan>` di
+`seni/gaya.txt`.
+
+### Header tetap
+
+Banner dan info selalu diam di bagian atas layar; menu, `pkg install`, dan
+keluaran lain hanya menggulir di bawahnya (memakai *scroll region* terminal).
+Kalau layar diputar atau ukurannya berubah, header digambar ulang. Kalau
+layar terlalu sempit atau pendek untuk gaya pilihan, otomatis turun ke gaya
+`tipis`. Matikan dengan `MXM_HEADER=0 bash deck.sh`.
 
 ---
 
@@ -148,7 +178,10 @@ mxm-deck/
 │   └── 06-belajar.sh
 ├── lib/
 │   ├── warna.sh       ← palet MXM (fungsi echo berwarna)
+│   ├── banner.sh      ← gaya-gaya banner ASCII
+│   ├── layar.sh       ← header tetap di atas layar
 │   └── pasang.sh      ← logika pasang bersama (pkg/pip resmi saja)
+├── seni/              ← huruf ASCII tiap gaya + daftar gaya.txt
 └── docs/
     ├── ATURAN.md      ← versi panjang dari bagian Aturan
     └── jurnal/        ← catatan tiap langkah (gaya mxm-gameboy)
@@ -178,8 +211,11 @@ Pilihan lain:
 
 ```bash
 bash deck.sh 2              # langsung ke kategori 2 (File)
+bash deck.sh pratinjau      # lihat semua gaya banner
+MXM_GAYA=acak bash deck.sh  # gaya banner acak
 MXM_COBA=1 bash deck.sh     # mode coba: perintah ditampilkan, tidak dijalankan
 NO_COLOR=1 bash deck.sh     # tanpa warna
+MXM_HEADER=0 bash deck.sh   # header ikut menggulir
 ```
 
 Di tiap kategori, pilih `a` (semua), nomor tertentu (mis. `1 3`), atau `q`
