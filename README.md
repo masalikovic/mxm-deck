@@ -133,7 +133,7 @@ katoolin, tetapi dengan isi dan aturan MXM.
 
 ---
 
-## 🗺️ Rencana repo (saran)
+## 🗺️ Struktur repo
 
 ```
 mxm-deck/
@@ -147,7 +147,8 @@ mxm-deck/
 │   ├── 05-dev.sh
 │   └── 06-belajar.sh
 ├── lib/
-│   └── warna.sh       ← palet MXM (fungsi echo berwarna)
+│   ├── warna.sh       ← palet MXM (fungsi echo berwarna)
+│   └── pasang.sh      ← logika pasang bersama (pkg/pip resmi saja)
 └── docs/
     ├── ATURAN.md      ← versi panjang dari bagian Aturan
     └── jurnal/        ← catatan tiap langkah (gaya mxm-gameboy)
@@ -164,7 +165,7 @@ Prinsip yang diwarisi dari mxm-gameboy:
 
 ---
 
-## 🚀 Mulai (nanti, di repo baru)
+## 🚀 Mulai
 
 ```bash
 pkg update && pkg install git
@@ -172,6 +173,18 @@ git clone https://github.com/Masalikovic/mxm-deck
 cd mxm-deck
 bash deck.sh
 ```
+
+Pilihan lain:
+
+```bash
+bash deck.sh 2              # langsung ke kategori 2 (File)
+MXM_COBA=1 bash deck.sh     # mode coba: perintah ditampilkan, tidak dijalankan
+NO_COLOR=1 bash deck.sh     # tanpa warna
+```
+
+Di tiap kategori, pilih `a` (semua), nomor tertentu (mis. `1 3`), atau `q`
+(batal). Alat dipasang satu per satu; hasilnya dicatat di
+`~/.mxm-deck/pasang.log`.
 
 ---
 
