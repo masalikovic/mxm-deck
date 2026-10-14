@@ -35,3 +35,20 @@
 
 - Mengecek status `pip` (`pip show`) agak lambat di HP, jadi kategori
   "Data pribadi" mungkin butuh satu-dua detik sebelum daftarnya tampil.
+
+## Perbaikan dari uji di HP (screenshot Termux, Android 13)
+
+1. **Header tergeser ke tengah saat keyboard muncul/hilang.** Saat ukuran
+   layar berubah, Termux mereset scroll region dan memunculkan riwayat gulir
+   di atas header. Termux memang memasukkan baris yang tergulir dari dalam
+   region ke riwayat. Bash baru menjalankan trap SIGWINCH setelah `read`
+   selesai, jadi di prompt selain menu utama (pilih gaya, kategori, hapus,
+   konfirmasi) layar tidak digambar ulang sampai Enter ditekan.
+   Perbaikan: semua prompt memakai `mxm_baca` (`read -t 1` berulang). Saat
+   ukuran berubah, layar dibersihkan, header digambar ulang, lalu isi layar
+   saat itu (daftar + prompt) ditampilkan lagi. Ketikan yang belum di-Enter
+   tetap aman di buffer terminal. Uji baru di `tests/uji_layar.py` gagal
+   pada versi lama dan lulus pada versi baru.
+2. **Uptime "?".** Android 10+ memblokir `/proc/uptime` untuk aplikasi.
+   Bila tak terbaca, baris itu diganti versi Termux (`TERMUX_VERSION`), atau
+   ukuran layar bila di luar Termux.

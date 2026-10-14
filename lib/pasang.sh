@@ -44,11 +44,9 @@ _mxm_sudah_ada() {
   esac
 }
 
+# Bisa memasang? (mode coba selalu bisa; selain itu butuh pkg dari Termux)
 _mxm_cek_lingkungan() {
-  if [[ "${MXM_COBA:-0}" == 1 ]]; then
-    mxm_warn "Mode coba: perintah hanya ditampilkan, tidak dijalankan."
-    return 0
-  fi
+  [[ "${MXM_COBA:-0}" == 1 ]] && return 0
   if ! command -v pkg >/dev/null; then
     mxm_galat "Perintah 'pkg' tidak ditemukan. MXM Deck dibuat untuk Termux."
     mxm_redup "    Jalankan dengan MXM_COBA=1 untuk melihat perintahnya saja."
@@ -56,11 +54,27 @@ _mxm_cek_lingkungan() {
   fi
 }
 
+# Baca satu baris; peka resize bila lib/layar.sh di-source.
+_mxm_baca() {
+  if declare -F mxm_baca >/dev/null; then
+    mxm_baca "$@"
+  else
+    IFS= read -r "$1"
+  fi
+}
+
+_MXM_TANYA=
+_mxm_tanya_prompt() {
+  printf '%s[?]%s %s%s [y/N] %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$_MXM_TANYA" "$MXM_RESET"
+}
+
+# mxm_tanya <pertanyaan> [perintah yang menggambar konteks di atasnya]
 mxm_tanya() {
   local jawab
   [[ "${MXM_YA:-0}" == 1 ]] && return 0
-  printf '%s[?]%s %s%s [y/N] %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$1" "$MXM_RESET"
-  read -r jawab || return 1
+  _MXM_TANYA=$1
+  _mxm_tanya_prompt
+  _mxm_baca jawab "${2:+$2; }_mxm_tanya_prompt" || return 1
   [[ "$jawab" == [yY] || "$jawab" == [yY][aA] ]]
 }
 
@@ -195,10 +209,36 @@ _mxm_proses() {
   fi
 }
 
+# Bagian atas layar kategori: judul + daftar (+ catatan mode coba).
+_MXM_JUDUL=
+_mxm_kategori_kepala() {
+  echo
+  mxm_aksen "== $_MXM_JUDUL =="
+  mxm_daftar
+  [[ "${MXM_COBA:-0}" == 1 ]] && mxm_warn "Mode coba: perintah hanya ditampilkan, tidak dijalankan."
+}
+
+_mxm_kategori_tampil() {
+  _mxm_kategori_kepala
+  printf '%s[?]%s %sPasang: [a]=semua, nomor (mis. 1 3) · [h]=hapus · [q]=batal: %s' \
+    "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
+}
+
+_mxm_hapus_tampil() {
+  _mxm_kategori_kepala
+  printf '%s[?]%s %sHapus nomor (mis. 2 4), [q]=batal: %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
+}
+
+_MXM_AKAN_DIHAPUS=
+_mxm_hapus_ringkas() {
+  mxm_warn "Yang dihapus: $_MXM_AKAN_DIHAPUS"
+  mxm_redup "    pkg/pip akan menampilkan apa saja yang ikut terhapus dan bertanya lagi."
+}
+
 _mxm_menu_hapus() {
   local judul=$1 pilih baris nama nama_semua=()
   printf '%s[?]%s %sHapus nomor (mis. 2 4), [q]=batal: %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
-  read -r pilih || return 0
+  _mxm_baca pilih _mxm_hapus_tampil || return 0
   [[ -z "$pilih" || "$pilih" == [qQ] ]] && { mxm_redup "Batal."; return 0; }
   _mxm_pilih_nomor "$pilih"
   ((${#_MXM_TERPILIH[@]} == 0)) && { mxm_redup "Tidak ada yang dipilih."; return 0; }
@@ -206,27 +246,27 @@ _mxm_menu_hapus() {
     IFS='|' read -r nama _ <<<"$baris"
     nama_semua+=("$nama")
   done
-  mxm_warn "Yang dihapus: ${nama_semua[*]}"
-  mxm_redup "    pkg/pip akan menampilkan apa saja yang ikut terhapus dan bertanya lagi."
-  MXM_YA=0 mxm_tanya "Lanjut menghapus?" || { mxm_redup "Batal."; return 0; }
+  _MXM_AKAN_DIHAPUS="${nama_semua[*]}"
+  _mxm_hapus_ringkas
+  MXM_YA=0 mxm_tanya "Lanjut menghapus?" _mxm_hapus_ringkas || { mxm_redup "Batal."; return 0; }
   _mxm_proses "$judul" hapus
 }
 
 # Alur satu kategori: tampilkan daftar, tanya, pasang/hapus satu per satu.
 mxm_kategori() {
   local judul=$1 pilih
-  echo
-  mxm_aksen "== $judul =="
-  mxm_daftar
+  _MXM_JUDUL=$judul
+  if ! _mxm_cek_lingkungan 2>/dev/null >/dev/null; then
+    _mxm_kategori_kepala
+    _mxm_cek_lingkungan
+    return 1
+  fi
 
-  _mxm_cek_lingkungan || return 1
-
-  printf '%s[?]%s %sPasang: [a]=semua, nomor (mis. 1 3) · [h]=hapus · [q]=batal: %s' \
-    "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
+  _mxm_kategori_tampil
   if [[ "${MXM_YA:-0}" == 1 ]]; then
     pilih=a; echo a
   else
-    read -r pilih || return 0
+    _mxm_baca pilih _mxm_kategori_tampil || return 0
   fi
 
   case "$pilih" in

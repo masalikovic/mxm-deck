@@ -16,14 +16,18 @@ TOOLS=(
 )
 
 # Kategori ini menyangkut jaringan: minta persetujuan Aturan dulu.
-echo
-mxm_aksen "== Aturan jaringan =="
-mxm_teks "Alat di sini HANYA boleh diarahkan ke perangkat dan jaringan"
-mxm_teks "milik Anda sendiri atau yang Anda kelola dengan izin tertulis."
-mxm_redup "Memindai milik orang lain tanpa izin melanggar hukum (UU ITE)."
-mxm_redup "Selengkapnya: docs/ATURAN.md"
-echo
-if ! mxm_tanya "Saya paham dan setuju"; then
+aturan_jaringan() {
+  echo
+  mxm_aksen "== Aturan jaringan =="
+  mxm_teks "Alat di sini HANYA boleh diarahkan ke perangkat dan jaringan"
+  mxm_teks "milik Anda sendiri atau yang Anda kelola dengan izin tertulis."
+  mxm_redup "Memindai milik orang lain tanpa izin melanggar hukum (UU ITE)."
+  mxm_redup "Selengkapnya: docs/ATURAN.md"
+  echo
+}
+
+aturan_jaringan
+if ! mxm_tanya "Saya paham dan setuju" aturan_jaringan; then
   mxm_redup "Tidak setuju — tidak ada yang dipasang."
   exit 0
 fi

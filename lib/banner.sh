@@ -78,19 +78,25 @@ _mxm_seni_berkas() {
 # --- gaya gameboy (ala neofetch) ------------------------------------------
 
 _mxm_info_perangkat() {
-  local os up mem_t mem_a k v paket=() dpkg_info
+  local os up='' mem_t mem_a k v paket=() dpkg_info baris_waktu
   if command -v getprop >/dev/null; then
     os="Android $(getprop ro.build.version.release 2>/dev/null)"
   else
     os=$(uname -o 2>/dev/null || uname -s)
   fi
-  if [[ -r /proc/uptime ]]; then
-    read -r up _ </proc/uptime; up=${up%.*}
+  # Android 10+ sering memblokir /proc/uptime untuk aplikasi.
+  { read -r up _ </proc/uptime; } 2>/dev/null
+  up=${up%.*}
+  if [[ "$up" =~ ^[0-9]+$ ]]; then
     if ((up >= 86400)); then
-      up="$((up / 86400)) hari, $((up % 86400 / 3600)) jam"
+      baris_waktu="Uptime|$((up / 86400)) hari, $((up % 86400 / 3600)) jam"
     else
-      up="$((up / 3600)) jam, $((up % 3600 / 60)) mnt"
+      baris_waktu="Uptime|$((up / 3600)) jam, $((up % 3600 / 60)) mnt"
     fi
+  elif [[ -n "${TERMUX_VERSION:-}" ]]; then
+    baris_waktu="Termux|$TERMUX_VERSION"
+  else
+    baris_waktu="Layar|${MXM_KOLOM:-?}x${MXM_BARIS:-?}"
   fi
   if [[ -r /proc/meminfo ]]; then
     while read -r k v _; do
@@ -105,7 +111,7 @@ _mxm_info_perangkat() {
     "${USER:-$(id -un 2>/dev/null)}@${HOSTNAME:-$(uname -n)}" \
     "OS|$os" \
     "Kernel|$(uname -r)" \
-    "Uptime|${up:-?}" \
+    "$baris_waktu" \
     "Paket|${#paket[@]}" \
     "Shell|bash ${BASH_VERSION%%(*}" \
     "Memori|$(((${mem_t:-0} - ${mem_a:-0}) / 1024))MiB / $((${mem_t:-0} / 1024))MiB"

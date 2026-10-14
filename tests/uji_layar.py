@@ -138,6 +138,44 @@ s.ketik('2\n'); s.ketik('a\n')
 cek('header gameboy tetap setelah menggulir', s.baris(1).startswith(' ,-----------.'), s)
 s.tutup()
 
+print('== resize saat menunggu input (sebelum Enter)')
+GARIS_60 = '+' + '-' * 48 + '+'
+
+
+def baris_terakhir(s):
+    isi = [l.rstrip() for l in s.screen.display if l.strip()]
+    return isi[-1] if isi else ''
+
+
+s = Sesi(30, 46)
+s.ketik('g\n', 2.0)
+s.resize(40, 60)
+cek('pilih gaya: header digambar ulang tanpa menunggu Enter', s.baris(1) == STANDAR_1 and s.baris(8) == GARIS_60, s)
+cek('pilih gaya: prompt tampil lagi', 'Pilih gaya' in baris_terakhir(s), s)
+cek('pilih gaya: header tidak dobel', sum(l.rstrip() == STANDAR_1 for l in s.screen.display) == 1, s)
+s.ketik('7')            # belum Enter
+s.resize(30, 46)
+s.ketik('\n', 2.0)
+cek('ketikan sebelum resize tidak hilang', s.baris(1).startswith(' ,-----------.'), s)
+s.tutup()
+
+s = Sesi(30, 46, {'MXM_COBA': '1'})
+s.ketik('2\n', 1.5)
+s.resize(40, 60)
+cek('kategori (proses anak): header digambar ulang', s.baris(1) == STANDAR_1 and s.baris(8) == GARIS_60, s)
+cek('kategori: daftar & prompt tampil lagi',
+    any('Pasang: [a]=semua' in l for l in s.screen.display) and any('rsync' in l for l in s.screen.display), s)
+s.ketik('a\n', 2.0)
+cek('kategori: tetap bisa memasang setelah resize', any('Selesai: 5 berhasil' in l for l in s.screen.display), s)
+s.tutup()
+
+s = Sesi(30, 46)
+s.ketik('4\n', 1.5)
+s.resize(40, 60)
+cek('Aturan jaringan: teks aturan & pertanyaan tampil lagi',
+    any('Aturan jaringan' in l for l in s.screen.display) and 'Saya paham dan setuju' in baris_terakhir(s), s)
+s.tutup()
+
 print('== header dimatikan')
 s = Sesi(26, 46, {'MXM_HEADER': '0', 'MXM_COBA': '1'})
 s.ketik('2\n'); s.ketik('a\n')

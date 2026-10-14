@@ -48,15 +48,21 @@ pratinjau() {
   done < <(mxm_gaya_indeks)
 }
 
+# Layar pilih gaya: pratinjau + pilihan acak + prompt (juga dipakai saat
+# layar digambar ulang karena ukurannya berubah).
+_pilih_gaya_tampil() {
+  pratinjau
+  echo
+  printf '%s %d) %sacak%s  %s(gaya berbeda tiap kali dibuka)%s\n' "$MXM_ORANYE" $(($(mxm_gaya_indeks | wc -l) + 1)) \
+    "$MXM_TEBAL$MXM_CREAM" "$MXM_RESET" "$MXM_ABU" "$MXM_RESET"
+  printf '%s[?]%s %sPilih gaya (nomor, kosong = batal): %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
+}
+
 pilih_gaya() {
   local daftar=() pilih g
   mapfile -t daftar < <(mxm_gaya_indeks | cut -d'|' -f1)
-  pratinjau
-  echo
-  printf '%s %d) %sacak%s  %s(gaya berbeda tiap kali dibuka)%s\n' "$MXM_ORANYE" $((${#daftar[@]} + 1)) \
-    "$MXM_TEBAL$MXM_CREAM" "$MXM_RESET" "$MXM_ABU" "$MXM_RESET"
-  printf '%s[?]%s %sPilih gaya (nomor, kosong = batal): %s' "$MXM_ORANYE" "$MXM_RESET" "$MXM_CREAM" "$MXM_RESET"
-  read -r pilih || return 0
+  _pilih_gaya_tampil
+  mxm_baca pilih _pilih_gaya_tampil || return 0
   if [[ "$pilih" =~ ^[0-9]+$ ]] && ((pilih >= 1 && pilih <= ${#daftar[@]} + 1)); then
     if ((pilih == ${#daftar[@]} + 1)); then g=acak; else g=${daftar[pilih-1]}; fi
     mxm_gaya_simpan "$g"
@@ -75,6 +81,8 @@ jalankan() {
     [1-6])
       IFS='|' read -r skrip _ <<<"${KATEGORI[pilih-1]}"
       bash "$DIR/tools/$skrip"
+      # Resize selama skrip berjalan sudah ditangani skrip itu sendiri.
+      _MXM_UBAH=0
       mxm_layar_pulihkan
       ;;
     g|G) pilih_gaya ;;
@@ -82,6 +90,7 @@ jalankan() {
     a|A)
       if command -v less >/dev/null && [[ -t 1 ]]; then
         less "$DIR/docs/ATURAN.md"
+        _MXM_UBAH=0
         mxm_layar_pulihkan
       else
         cat "$DIR/docs/ATURAN.md"
@@ -100,32 +109,14 @@ fi
 
 prompt() { printf '%smxm%s > %s' "$MXM_ORANYE" "$MXM_ABU" "$MXM_RESET"; }
 
-# Baca pilihan menu; selama menunggu, gambar ulang layar bila ukurannya
-# berubah (HP diputar, keyboard muncul).
-_ubah=0
-trap '_ubah=1' WINCH
 trap 'mxm_layar_selesai' EXIT
 trap 'exit 130' INT TERM
-baca_pilihan() {
-  local s
-  while true; do
-    IFS= read -r -t 1 pilih && return 0
-    s=$?
-    ((s > 128)) || return 1
-    if ((_ubah)); then
-      _ubah=0
-      mxm_layar_mulai
-      menu
-      prompt
-    fi
-  done
-}
 
 mxm_layar_mulai
 while true; do
   menu
   prompt
-  baca_pilihan || { echo; break; }
+  mxm_baca pilih 'menu; prompt' || { echo; break; }
   jalankan "$pilih" || break
   echo
 done
