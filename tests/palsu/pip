@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# pip palsu: show / install / uninstall.
+set -u
+: "${MXM_UJI_STATUS:?}"
+touch "$MXM_UJI_STATUS"
+echo "pip-palsu $*" >>"$MXM_UJI_STATUS.log"
+aksi=$1; shift
+case "$aksi" in
+  show) grep -qx "pip:$1" "$MXM_UJI_STATUS" ;;
+  install) for p in "$@"; do echo "pip:$p" >>"$MXM_UJI_STATUS"; done ;;
+  uninstall) for p in "$@"; do sed -i "/^pip:$p\$/d" "$MXM_UJI_STATUS"; done ;;
+  *) exit 1 ;;
+esac

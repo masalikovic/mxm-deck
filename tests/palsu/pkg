@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# pkg palsu untuk pengujian: status paket disimpan di $MXM_UJI_STATUS.
+set -u
+: "${MXM_UJI_STATUS:?}"
+touch "$MXM_UJI_STATUS"
+echo "pkg-palsu $*" >>"$MXM_UJI_STATUS.log"
+# Tiru apt: reset scroll region lalu cetak banyak baris.
+if [[ "${MXM_UJI_RESET_REGION:-0}" == 1 ]]; then
+  printf '\e[r'
+  for i in $(seq 1 40); do echo "apt baris $i"; done
+fi
+aksi=$1; shift
+args=()
+for a in "$@"; do [[ "$a" == -* ]] || args+=("$a"); done
+for p in "${args[@]}"; do
+  [[ " ${MXM_UJI_GAGAL:-} " == *" $p "* ]] && { echo "E: Unable to locate package $p" >&2; exit 100; }
+done
+case "$aksi" in
+  install) for p in "${args[@]}"; do grep -qx "pkg:$p" "$MXM_UJI_STATUS" || echo "pkg:$p" >>"$MXM_UJI_STATUS"; done ;;
+  uninstall) for p in "${args[@]}"; do sed -i "/^pkg:$p\$/d" "$MXM_UJI_STATUS"; done ;;
+  *) echo "pkg palsu: aksi tidak dikenal: $aksi" >&2; exit 1 ;;
+esac

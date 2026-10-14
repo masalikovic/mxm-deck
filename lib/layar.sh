@@ -14,6 +14,12 @@
 # Sisa baris minimum untuk area gulir di bawah header.
 MXM_SISA_MIN=10
 _MXM_HEADER=()
+_MXM_UBAH=0
+
+# Bash baru menjalankan trap setelah "read" selesai, jadi semua prompt
+# memakai mxm_baca (read -t 1 berulang) agar resize langsung ditangani.
+# Proses anak (tools/*.sh) ikut memantau bila header tetap sedang aktif.
+[[ "${MXM_LAYAR_AKTIF:-0}" == 1 ]] && trap '_MXM_UBAH=1' WINCH
 
 _mxm_ukuran() {
   local s
@@ -84,6 +90,7 @@ mxm_layar_mulai() {
   _mxm_header_gambar
   printf '\e[%d;1H' $((MXM_HEADER_TINGGI + 1))
   export MXM_LAYAR_AKTIF=1 MXM_HEADER_TINGGI
+  trap '_MXM_UBAH=1' WINCH
 }
 
 # Gambar ulang header & scroll region tanpa menghapus area bawah.
@@ -116,10 +123,46 @@ _mxm_baris_kursor() {
   stty_lama=$(stty -g </dev/tty 2>/dev/null) || return 0
   stty -echo -icanon </dev/tty 2>/dev/null
   printf '\e[6n' >/dev/tty
+  # shellcheck disable=SC2034  # "R" adalah pembatas -d, bukan variabel
   IFS= read -r -s -t 1 -d R jawab </dev/tty
   stty "$stty_lama" </dev/tty 2>/dev/null
   baris=${jawab#*\[}; baris=${baris%;*}
   [[ "$baris" =~ ^[0-9]+$ ]] && echo "$baris"
+}
+
+# Ukuran layar berubah: bersihkan, gambar header, lalu jalankan perintah
+# penggambar ulang isi layar saat ini (mis. daftar + prompt). Termux mereset
+# scroll region dan memunculkan riwayat di atas header saat ukuran berubah,
+# jadi layar perlu digambar ulang penuh.
+mxm_layar_ulang() {
+  [[ "${MXM_LAYAR_AKTIF:-0}" == 1 ]] && mxm_layar_bisa || return 0
+  _mxm_ukuran
+  mapfile -t _MXM_HEADER < <(mxm_header_teks)
+  MXM_HEADER_TINGGI=${#_MXM_HEADER[@]}
+  printf '\e[2J'
+  _mxm_header_gambar
+  printf '\e[%d;1H' $((MXM_HEADER_TINGGI + 1))
+  [[ -n "${1:-}" ]] && eval "$1"
+}
+
+# mxm_baca <variabel> [perintah-gambar-ulang]
+# Seperti "read -r", tetapi menggambar ulang layar bila ukurannya berubah
+# selama menunggu. Ketikan yang belum di-Enter tetap aman di buffer terminal.
+mxm_baca() {
+  local _mb_var=$1 _mb_ulang=${2:-} _mb_isi _mb_s
+  while true; do
+    IFS= read -r -t 1 _mb_isi
+    _mb_s=$?
+    if ((_mb_s == 0)); then
+      printf -v "$_mb_var" '%s' "$_mb_isi"
+      return 0
+    fi
+    ((_mb_s > 128)) || return 1
+    if ((_MXM_UBAH)); then
+      _MXM_UBAH=0
+      mxm_layar_ulang "$_mb_ulang"
+    fi
+  done
 }
 
 # Kembalikan terminal ke normal (dipanggil saat keluar).
